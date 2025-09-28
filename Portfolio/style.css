@@ -16,3 +16,42 @@ html {
     font-size: 60%;
     overflow-x: hidden;
 }
+body {
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+.header {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    padding: 4rem 15%;
+    background: black;
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+#menu-icon {
+    font-size: 3.5rem;
+    color: var(--text-color);
+    display: none;
+}
+.logo {
+    font-size: 3.5rem;
+    color: var(--main-color);
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.3 ease-in-out;
+}
+.logo:hover {
+    transform: scale(1.1);
+}
+span {
+    background-color: linear-gradient (
+        270deg,
+        #ff9a9a 10%,
+        #ff1d15 100%
+    );
+}
