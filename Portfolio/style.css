@@ -266,3 +266,31 @@ section {
 .project-card p{
     font-size: 1.6rem;
 }
+
+.contact{
+    background-color: var(--bg-color);
+}
+.contact h2{
+    margin-bottom: 3rem;
+    color: var(--text-color);
+}
+.contact form{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 3rem;
+    margin: 5rem 0;
+    text-align: center;
+}
+.contact form .input-box input, 
+.contact form textarea{
+    width: 100%;
+    padding: 2.5rem;
+    font-size: 1.8rem;
+    border: 2px solid var(--main-color);
+    border-radius: 2rem;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 1.5rem 0;
+    resize: none;
+}
