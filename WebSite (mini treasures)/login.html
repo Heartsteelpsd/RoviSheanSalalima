@@ -49,6 +49,14 @@
             <form class="mt-8 space-y-6" action="#" method="POST">
                 <input type="hidden" name="remember" value="true">
                 <div class="rounded-md shadow-sm space-y-4">
+                    <div class="flex items-center gap-4">
+                        <label class="inline-flex items-center text-sm">
+                            <input type="radio" name="login-role" value="customer" checked class="mr-2"> Customer
+                        </label>
+                        <label class="inline-flex items-center text-sm">
+                            <input type="radio" name="login-role" value="admin" class="mr-2"> Admin
+                        </label>
+                    </div>
                     <div>
                         <label for="email-address" class="sr-only">Email address</label>
                         <input id="email-address" name="email" type="email" autocomplete="email" required class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm" placeholder="Email address">
@@ -106,16 +114,34 @@
         </div>
     </div>
 
-    <script>
+            <script>
         document.addEventListener('DOMContentLoaded', () => {
             feather.replace();
+
+            function defaultAdminPass(){ return localStorage.getItem('mt_admin_pass') || 'admin123'; }
 
             const form = document.querySelector('form');
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
+                const role = (document.querySelector('input[name="login-role"]:checked')||{}).value || 'customer';
                 const email = document.getElementById('email-address').value.trim().toLowerCase();
                 const password = document.getElementById('password').value;
 
+                if(role === 'admin'){
+                    // admin login uses admin password only
+                    if(password === defaultAdminPass()){
+                        localStorage.setItem('mt_admin_auth','1');
+                        // optionally set a user email for admin context
+                        localStorage.setItem('mt_userEmail', email || 'admin@local');
+                        // go to admin dashboard
+                        window.location.href = 'admin.html';
+                    } else {
+                        alert('Invalid admin password.');
+                    }
+                    return;
+                }
+
+                // customer login (existing behavior)
                 const users = JSON.parse(localStorage.getItem('mt_users') || '{}');
                 if (users[email] && users[email].password === password) {
                     localStorage.setItem('mt_loggedIn', 'true');

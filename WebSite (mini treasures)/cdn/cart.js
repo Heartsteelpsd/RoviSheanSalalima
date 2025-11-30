@@ -54,6 +54,8 @@
   function attachAddButtons(){
     document.querySelectorAll('.product-card, .group.relative').forEach(card=>{
       if(card.querySelector('.add-to-cart')) return; // already added
+      // don't add add-to-cart controls for guests (not logged in)
+      if(!getCurrentUser()) return;
       const titleEl = card.querySelector('h3');
       const priceEl = card.querySelector('p.text-sm.font-medium');
       const imgEl = card.querySelector('img');
@@ -91,7 +93,25 @@
     if(!root) return;
     const cart = getCart();
     if(cart.length===0){
-      root.innerHTML = `<h1 class="text-3xl font-extrabold">Your cart is empty</h1><p class="mt-4">Browse products and add items to your cart.</p>`;
+      root.innerHTML = `
+        <div class="mb-6">
+          <button id="cart-back-btn" class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200">← Back</button>
+        </div>
+        <h1 class="text-3xl font-extrabold">Your cart is empty</h1>
+        <p class="mt-4">Browse products and add items to your cart.</p>
+        <div class="mt-6">
+          <a href="shop.html" class="inline-flex items-center px-4 py-2 bg-pink-600 text-white rounded-md">Continue shopping</a>
+        </div>
+      `;
+      // attach back handler for empty cart
+      const backBtnEmpty = document.getElementById('cart-back-btn');
+      if(backBtnEmpty){
+        backBtnEmpty.addEventListener('click', (e)=>{
+          e.preventDefault();
+          try{ if(window.history && window.history.length>1) window.history.back(); else window.location.href = 'index.html'; }
+          catch(err){ window.location.href = 'index.html'; }
+        });
+      }
       return;
     }
     let subtotal = 0;
