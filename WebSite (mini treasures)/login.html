@@ -10,6 +10,30 @@
 </head>
 <body class="bg-gray-50">
 
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <img class="h-8 w-auto" src="http://static.photos/retail/200x200/42" alt="Mini Treasures Logo">
+                        <span class="ml-2 text-xl font-bold text-pink-500">Mini Treasures</span>
+                    </div>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                    <a href="index.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Home</a>
+                    <a href="register.html" class="ml-4 text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Create an account</a>
+                    <a href="cart.html" class="ml-4 bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none relative">
+                        <i data-feather="shopping-cart"></i>
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-500 rounded-full"><span id="cart-count">0</span></span>
+                    </a>
+                    <span id="user-welcome" class="ml-4 text-sm text-gray-700 hidden"></span>
+                    <button id="logout-btn" class="ml-3 px-3 py-1 text-sm bg-gray-100 rounded hidden">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div x-show="showModal" 
          x-transition:enter="modal-enter"
          x-transition:enter-active="modal-enter-active"
@@ -85,14 +109,25 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             feather.replace();
-            
-            // Close modal when clicking outside
-            document.addEventListener('click', (e) => {
-                if (e.target === document.querySelector('[x-show="showModal"]')) {
+
+            const form = document.querySelector('form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email-address').value.trim().toLowerCase();
+                const password = document.getElementById('password').value;
+
+                const users = JSON.parse(localStorage.getItem('mt_users') || '{}');
+                if (users[email] && users[email].password === password) {
+                    localStorage.setItem('mt_loggedIn', 'true');
+                    localStorage.setItem('mt_userEmail', email);
+                    // Redirect to homepage after successful login
                     window.location.href = 'index.html';
+                } else {
+                    alert('Invalid email or password.');
                 }
             });
         });
     </script>
+    <script src="cdn/cart.js"></script>
 </body>
 </html>

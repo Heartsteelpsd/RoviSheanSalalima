@@ -22,6 +22,12 @@
                 <div class="hidden sm:ml-6 sm:flex sm:items-center">
                     <a href="index.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Back to Home</a>
                     <a href="login.html" class="ml-4 text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Already have an account?</a>
+                    <a href="cart.html" class="ml-4 bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none relative">
+                        <i data-feather="shopping-cart"></i>
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-500 rounded-full"><span id="cart-count">0</span></span>
+                    </a>
+                    <span id="user-welcome" class="ml-4 text-sm text-gray-700 hidden"></span>
+                    <button id="logout-btn" class="ml-3 px-3 py-1 text-sm bg-gray-100 rounded hidden">Logout</button>
                 </div>
             </div>
         </div>
@@ -102,7 +108,42 @@
     </div>
 
     <script>
-        feather.replace();
+        document.addEventListener('DOMContentLoaded', () => {
+            feather.replace();
+
+            const form = document.querySelector('form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('full-name').value.trim();
+                const email = document.getElementById('email-address').value.trim().toLowerCase();
+                const password = document.getElementById('password').value;
+                const confirm = document.getElementById('confirm-password').value;
+
+                if (!name || !email || !password) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+
+                if (password !== confirm) {
+                    alert('Passwords do not match.');
+                    return;
+                }
+
+                const users = JSON.parse(localStorage.getItem('mt_users') || '{}');
+                if (users[email]) {
+                    alert('An account with that email already exists. Please sign in.');
+                    return;
+                }
+
+                users[email] = { name: name, password: password };
+                localStorage.setItem('mt_users', JSON.stringify(users));
+
+                // Mark user as logged in and redirect to homepage
+                localStorage.setItem('mt_loggedIn', 'true');
+                localStorage.setItem('mt_userEmail', email);
+                window.location.href = 'index.html';
+            });
+        });
     </script>
 </body>
 </html>

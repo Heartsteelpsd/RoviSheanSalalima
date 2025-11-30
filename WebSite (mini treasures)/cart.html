@@ -34,20 +34,23 @@
                     </a>
                     <a href="cart.html" class="ml-3 bg-white p-1 rounded-full text-pink-500 hover:text-pink-700 focus:outline-none relative">
                         <i data-feather="shopping-cart"></i>
-                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-500 rounded-full">3</span>
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-500 rounded-full"><span id="cart-count">0</span></span>
                     </a>
+                    <span id="user-welcome" class="ml-4 text-sm text-gray-700 hidden"></span>
+                    <button id="logout-btn" class="ml-3 px-3 py-1 text-sm bg-gray-100 rounded hidden">Logout</button>
                 </div>
             </div>
         </div>
     </nav>
 
     <div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 mb-8">Your Cart</h1>
+        <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 mb-8"></h1>
         <!-- Cart content would go here -->
     </div>
 
     <script>
         feather.replace();
     </script>
+    <script src="cdn/cart.js"></script>
 </body>
 </html>

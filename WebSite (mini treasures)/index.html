@@ -47,8 +47,10 @@
                     </a>
                     <a href="cart.html" class="ml-3 bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none relative">
                         <i data-feather="shopping-cart"></i>
-                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-500 rounded-full">3</span>
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-500 rounded-full"><span id="cart-count">0</span></span>
                     </a>
+                    <span id="user-welcome" class="ml-4 text-sm text-gray-700 hidden"></span>
+                    <button id="logout-btn" class="ml-3 px-3 py-1 text-sm bg-gray-100 rounded hidden">Logout</button>
 </div>
                 <div class="-mr-2 flex items-center sm:hidden">
                     <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
@@ -71,10 +73,10 @@
                         Handcrafted collectibles that tell stories. Limited editions from top artists worldwide.
                     </p>
                     <div class="mt-8 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                        <a href="login.html" class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 md:py-4 md:text-lg md:px-10">
+                        <a id="start-collecting-btn" href="login.html" class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 md:py-4 md:text-lg md:px-10">
                             Start Collecting
                         </a>
-                        <a href="#" class="px-8 py-3 border border-pink-500 text-base font-medium rounded-md text-pink-600 bg-white hover:bg-pink-50 md:py-4 md:text-lg md:px-10">
+                        <a href="collections.html" class="px-8 py-3 border border-pink-500 text-base font-medium rounded-md text-pink-600 bg-white hover:bg-pink-50 md:py-4 md:text-lg md:px-10">
                             View Gallery
                         </a>
                     </div>
@@ -343,6 +345,22 @@
             }
         });
         feather.replace();
+
+        // If user is already logged in, remove the Start Collecting button
+        try{
+            const logged = localStorage.getItem('mt_userEmail');
+            if(logged){
+                const sc = document.getElementById('start-collecting-btn');
+                if(sc) sc.remove();
+                // also update navbar welcome if user info exists
+                const users = JSON.parse(localStorage.getItem('mt_users')||'{}');
+                const name = (users[logged] && users[logged].name) ? users[logged].name : '';
+                const welcome = document.getElementById('user-welcome');
+                const logoutBtn = document.getElementById('logout-btn');
+                if(welcome){ welcome.textContent = name ? ('Welcome, ' + name) : 'Welcome'; welcome.classList.remove('hidden'); }
+                if(logoutBtn) logoutBtn.classList.remove('hidden');
+            }
+        }catch(e){ console.warn('StartCollect check failed', e); }
     </script>
     <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 page-transition">
@@ -404,5 +422,6 @@
 
         feather.replace();
     </script>
+        <script src="cdn/cart.js"></script>
   </body>
 </html>
