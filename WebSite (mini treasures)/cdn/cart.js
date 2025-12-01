@@ -201,14 +201,33 @@
       checkoutForm.addEventListener('submit', (e)=>{
         e.preventDefault();
         const name = document.getElementById('checkout-name').value.trim();
-        const email = document.getElementById('checkout-email').value.trim();
+        // prefer logged-in user's email if present to ensure orders show up in their account
+        const loggedEmail = localStorage.getItem('mt_userEmail');
+        let email = document.getElementById('checkout-email').value.trim();
+        if(loggedEmail) email = loggedEmail;
+        email = (email || '').toLowerCase();
         const orderId = 'MT-' + Date.now();
+        // snapshot cart items before clearing
+        const cartItems = getCart();
         const receipt = {
           id: orderId,
           name, email,
-          items: getCart(),
+          items: cartItems,
           subtotal, fee, total
         };
+        // persist order into mt_orders so account/admin can display it
+        try{
+          const orders = JSON.parse(localStorage.getItem('mt_orders')||'[]');
+          // set a seller (store) and an estimated delivery date (5 days from now)
+          const seller = localStorage.getItem('mt_seller_email') || 'MiniTreasures@websystem.com';
+          const deliveryDate = new Date(Date.now() + 5*24*60*60*1000).toISOString();
+          const orderRecord = { id: receipt.id, email: (receipt.email||'').toLowerCase(), name: receipt.name, items: receipt.items, subtotal: receipt.subtotal, fee: receipt.fee, total: receipt.total, status: 'paid', date: new Date().toISOString(), seller, deliveryDate };
+          orders.push(orderRecord);
+          localStorage.setItem('mt_orders', JSON.stringify(orders));
+          // attach seller/delivery info to the runtime receipt we show immediately
+          receipt.seller = seller;
+          receipt.deliveryDate = deliveryDate;
+        }catch(err){ console.warn('Failed to save order', err); }
         // clear cart
         saveCart([]);
         renderReceipt(receipt);
@@ -220,18 +239,38 @@
     const root = document.querySelector('.max-w-7xl');
     if(!root) return;
     const itemsHtml = receipt.items.map(it=>`<div class="flex justify-between py-1"><div>${it.title} x${it.qty}</div><div>$${(it.price*it.qty).toFixed(2)}</div></div>`).join('');
+    const dateStr = (new Date()).toLocaleString();
+    const eta = receipt.deliveryDate ? new Date(receipt.deliveryDate).toLocaleString() : '';
+    const seller = receipt.seller || 'MiniTreasures@websystem.com';
     root.innerHTML = `
       <h1 class="text-3xl font-extrabold">Order Confirmed</h1>
-      <div class="mt-4 bg-white p-6 rounded shadow">
-        <div class="font-medium">Order ID: ${receipt.id}</div>
-        <div class="text-sm text-gray-600">Name: ${receipt.name} — ${receipt.email}</div>
-        <div class="mt-4">${itemsHtml}</div>
-        <div class="mt-4 text-right">Subtotal: $${receipt.subtotal.toFixed(2)}</div>
-        <div class="text-right">Shipping: $${receipt.fee.toFixed(2)}</div>
-        <div class="text-right font-bold">Total: $${receipt.total.toFixed(2)}</div>
-        <div class="mt-6 flex space-x-2">
-          <button id="print-receipt" class="px-4 py-2 bg-pink-600 text-white rounded">Print / Save</button>
-          <a href="index.html" class="px-4 py-2 bg-gray-200 rounded">Continue Shopping</a>
+      <div class="mt-4 bg-white p-6 rounded shadow grid gap-6 md:grid-cols-2">
+        <div>
+          <div class="font-medium">Order ID: ${receipt.id}</div>
+          <div class="text-sm text-gray-600">Placed: ${dateStr}</div>
+          <div class="text-sm text-gray-600">Name: ${receipt.name} — ${receipt.email}</div>
+          <div class="mt-4 border-t pt-4">
+            <h3 class="font-semibold mb-2">Items</h3>
+            <div class="space-y-2">${itemsHtml}</div>
+          </div>
+          <div class="mt-4 border-t pt-4">
+            <div class="text-sm text-pink-600">Delivery ETA: ${eta || 'TBD'}</div>
+            <div class="text-xs text-gray-400">Seller: ${seller}</div>
+          </div>
+        </div>
+        <div>
+          <div class="p-4 bg-gray-50 rounded">
+            <div class="flex justify-between"><div class="text-sm">Subtotal</div><div class="font-medium">$${receipt.subtotal.toFixed(2)}</div></div>
+            <div class="flex justify-between mt-2"><div class="text-sm">Shipping</div><div class="font-medium">$${receipt.fee.toFixed(2)}</div></div>
+            <div class="border-t mt-4 pt-4 flex justify-between items-center"><div class="text-lg font-bold">Total</div><div class="text-xl font-extrabold">$${receipt.total.toFixed(2)}</div></div>
+            <div class="mt-6 flex flex-col gap-2">
+              <button id="print-receipt" class="px-4 py-2 bg-pink-600 text-white rounded">Print / Save</button>
+              <button id="download-receipt" class="px-4 py-2 bg-white border rounded">Download Receipt</button>
+              <a href="receipt.html?id=${receipt.id}" id="open-invoice-btn" class="px-4 py-2 bg-white border rounded text-center">Open Invoice</a>
+              <a href="account.html?tab=purchases&order=${receipt.id}" id="view-orders-btn" class="px-4 py-2 bg-white border rounded text-center">View My Orders</a>
+              <a href="index.html" class="px-4 py-2 bg-gray-200 rounded text-center">Continue Shopping</a>
+            </div>
+          </div>
         </div>
       </div>
     `;

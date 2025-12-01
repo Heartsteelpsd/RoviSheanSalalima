@@ -63,6 +63,26 @@
               </table>
             </div>
           </div>
+
+          <div class="card" id="reports-card" style="margin-top:1rem;display:none">
+            <div class="section-title">Sales & Inventory Report</div>
+            <div id="report-summary" style="margin-bottom:.6rem">
+              <div class="small">Summary metrics will appear here.</div>
+            </div>
+            <div style="margin-bottom:.6rem">
+              <h4 class="small">Top Products</h4>
+              <div id="top-products" style="max-height:160px;overflow:auto"></div>
+            </div>
+            <div style="margin-bottom:.6rem">
+              <h4 class="small">Recent Orders</h4>
+              <div id="recent-orders" style="max-height:160px;overflow:auto"></div>
+            </div>
+            <div>
+              <h4 class="small">Inventory</h4>
+              <div id="inventory-area" style="max-height:180px;overflow:auto"></div>
+              <div style="margin-top:.5rem"><button id="init-inventory" class="btn-ghost">Initialize Inventory From Products</button> <button id="export-inventory" class="btn-ghost">Export Inventory CSV</button></div>
+            </div>
+          </div>
         </div>
 
         <aside>
@@ -82,6 +102,7 @@
               <button id="clear-orders" class="btn-ghost">Clear All Orders</button>
               <button id="clear-users" class="btn-ghost">Clear All Users</button>
               <button id="reindex-stats" class="btn">Recalculate</button>
+               <button id="open-reports" class="btn-ghost">Open Reports</button>
             </div>
           </div>
         </aside>
@@ -211,6 +232,83 @@
           });
         });
       }
+
+      // Reports: aggregate sales and inventory
+      function renderReports(){
+        const orders = JSON.parse(localStorage.getItem('mt_orders')||'[]');
+        const summary = { totalSales:0, totalOrders: orders.length };
+        const prodMap = {}; // title -> { qty, revenue }
+        orders.forEach(o=>{
+          summary.totalSales += Number(o.total||0);
+          (o.items||[]).forEach(it=>{
+            const key = it.title || 'Unknown Product';
+            prodMap[key] = prodMap[key] || { title:key, qty:0, revenue:0 };
+            prodMap[key].qty += Number(it.qty||1);
+            prodMap[key].revenue += Number((it.price||0) * (it.qty||1));
+          });
+        });
+        // render summary
+        const reportSummary = document.getElementById('report-summary');
+        if(reportSummary){
+          reportSummary.innerHTML = `<div style="display:flex;gap:1rem;flex-wrap:wrap"><div class="kpi"><div class="value">${summary.totalOrders}</div><div class="small">Orders</div></div><div class="kpi"><div class="value">$${summary.totalSales.toFixed(2)}</div><div class="small">Total Sales</div></div></div>`;
+        }
+        // top products
+        const top = Object.values(prodMap).sort((a,b)=>b.qty - a.qty).slice(0,10);
+        const tp = document.getElementById('top-products');
+        if(tp){
+          if(top.length===0) tp.innerHTML = '<div class="muted">No product sales yet.</div>';
+          else tp.innerHTML = top.map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f1f1"><div>${p.title}</div><div>${p.qty} sold — $${p.revenue.toFixed(2)}</div></div>`).join('');
+        }
+        // recent orders
+        const recent = document.getElementById('recent-orders');
+        if(recent){
+          const last = orders.slice().reverse().slice(0,12);
+          if(last.length===0) recent.innerHTML = '<div class="muted">No orders</div>';
+          else recent.innerHTML = last.map(o=>`<div style="padding:6px 0;border-bottom:1px solid #f7f7f7"><div class="small"><strong>${o.id}</strong> — ${o.email||''}</div><div class="muted">Total: $${Number(o.total||0).toFixed(2)} • ${new Date(o.date||0).toLocaleString()}</div></div>`).join('');
+        }
+        // inventory
+        const invArea = document.getElementById('inventory-area');
+        const invRaw = JSON.parse(localStorage.getItem('mt_inventory')||'null');
+        if(!invArea) return;
+        if(!invRaw){
+          invArea.innerHTML = '<div class="muted">No inventory data found. You can initialize inventory from sold products.</div>';
+        } else {
+          // invRaw is expected as { sku: { title, stock } }
+          const rows = [];
+          for(const k in invRaw){
+            const it = invRaw[k];
+            const sold = prodMap[it.title] ? prodMap[it.title].qty : 0;
+            rows.push(`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f7f7f7"><div>${it.title}</div><div>${it.stock} in stock • ${sold} sold</div></div>`);
+          }
+          invArea.innerHTML = rows.join('');
+        }
+      }
+
+      document.getElementById('open-reports').addEventListener('click', ()=>{
+        const card = document.getElementById('reports-card');
+        if(card.style.display === 'none' || !card.style.display){ card.style.display = 'block'; renderReports(); card.scrollIntoView({behavior:'smooth'}); }
+        else { card.style.display = 'none'; }
+      });
+
+      // initialize inventory from sold products
+      document.getElementById('init-inventory').addEventListener('click', ()=>{
+        if(!confirm('Create inventory entries (stock = 0) for each sold product?')) return;
+        const orders = JSON.parse(localStorage.getItem('mt_orders')||'[]');
+        const map = {};
+        orders.forEach(o=> (o.items||[]).forEach(it=> { const k = (it.title||'').replace(/\s+/g,'_'); map[k] = map[k] || { title: it.title, stock: 0 }; }));
+        localStorage.setItem('mt_inventory', JSON.stringify(map));
+        alert('Inventory initialized with ' + Object.keys(map).length + ' items (stock=0).');
+        renderReports();
+      });
+
+      document.getElementById('export-inventory').addEventListener('click', ()=>{
+        const inv = JSON.parse(localStorage.getItem('mt_inventory')||'null');
+        if(!inv){ alert('No inventory available to export'); return; }
+        const rows = [['sku','title','stock']];
+        for(const k in inv) rows.push([k, inv[k].title || '', String(inv[k].stock||0)]);
+        const csv = rows.map(r=> r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        downloadCSV('inventory.csv', csv);
+      });
 
       document.getElementById('user-search').addEventListener('input',(e)=>{ renderUsers(e.target.value.trim()); });
       document.getElementById('order-search').addEventListener('input',(e)=>{ renderOrders(e.target.value.trim()); });
